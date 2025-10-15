@@ -23,4 +23,25 @@ ls /dev/ttyUSB*
 ```
 
 ### 2. Set USB permissions
+```bash
+sudo chmod 666 /dev/ttyUSB0 /dev/ttyUSB1
+```
 
+### 3. Create a Python virtual environment
+```bash
+cd ~/MovingTable
+python3 -m venv venv
+source venv/bin/activate
+```
+
+### 4. Install dependencies
+```bash
+pip3 install -r requirements.txt
+```
+
+## 🛠️ Usage Example
+Run the main script:
+
+```bash
+python3 main.py
+```
