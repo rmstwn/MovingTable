@@ -1,0 +1,8 @@
+# Modbus communication
+pymodbus>=3.0.0
+
+# Serial port communication
+pyserial>=3.5
+
+# Optional: typing hints (if you use them)
+typing-extensions>=4.0.0
