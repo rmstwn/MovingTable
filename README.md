@@ -39,6 +39,8 @@ source venv/bin/activate
 pip3 install -r requirements.txt
 ```
 
+---
+
 ## 🛠️ Usage Example
 Run the main script:
 
