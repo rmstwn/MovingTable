@@ -20,3 +20,7 @@ ls /dev/ttyUSB*
 # Expected output:
 # /dev/ttyUSB0
 # /dev/ttyUSB1
+```
+
+### 2. Set USB permissions
+
