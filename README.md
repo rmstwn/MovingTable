@@ -5,6 +5,8 @@
 
 - Ubuntu/Linux  
 - Python 3.10+  
+- pymodbus>=3.0.0
+- pyserial>=3.5
 - USB connections:
   - Table 1 → `/dev/ttyUSB0`
   - Table 2 → `/dev/ttyUSB1`  
