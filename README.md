@@ -49,3 +49,13 @@ Run the main script:
 ```bash
 python3 main.py
 ```
+
+---
+
+## 📌 Notes
+
+- Always activate the virtual environment before running scripts:
+```bash
+source venv/bin/activate
+```
+- Ensure Modbus slave IDs are match.

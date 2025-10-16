@@ -1,5 +1,6 @@
 from moving_table.moving_table import MovingTableController
 from moving_table.oml_mrtu import *
+import threading
 
 # ------------------- Initialize communication -------------------
 # Table 1 on USB0
@@ -22,20 +23,55 @@ for table in [table1, table2]:
         table.configure_motor(m)
 
 # ------------------- Move tables -------------------
-# Move table 1: 100mm forward, rotate 45 degrees
-table1.go_to_table(
-    distance_mm=100,
-    linear_speed_pulses=8000,
-    angle_degrees=45,
-    rotate_speed_pulses=4000,
-    operation_type=1,
-)
+# # Move table 1: 100mm forward, rotate 45 degrees
+# table1.go_to_table(
+#     distance_mm=100,
+#     linear_speed_pulses=8000,
+#     angle_degrees=45,
+#     rotate_speed_pulses=4000,
+#     operation_type=1,
+# )
 
-# Move table 2: 100mm forward, rotate 45 degrees
-table2.go_to_table(
-    distance_mm=100,
-    linear_speed_pulses=8000,
-    angle_degrees=45,
-    rotate_speed_pulses=3500,
-    operation_type=1,
-)
+# # Move table 2: 100mm forward, rotate 45 degrees
+# table2.go_to_table(
+#     distance_mm=100,
+#     linear_speed_pulses=8000,
+#     angle_degrees=45,
+#     rotate_speed_pulses=3500,
+#     operation_type=1,
+# )
+
+
+# --- Define movement for each table ---
+def move_table1():
+    table1.go_to_table(
+        distance_mm=0,  # linear movement in mm
+        angle_degrees=0,  # rotation in degrees
+        linear_speed=5000,  # linear speed in pulses
+        rotate_speed=2000,  # rotation speed in pulses
+        operation_type=1,
+    )
+
+
+def move_table2():
+    table2.go_to_table(
+        distance_mm=0,
+        angle_degrees=0,
+        linear_speed=5000,
+        rotate_speed=2000,
+        operation_type=1,
+    )
+
+
+# --- Run both tables simultaneously ---
+thread1 = threading.Thread(target=move_table1)
+thread2 = threading.Thread(target=move_table2)
+
+thread1.start()
+thread2.start()
+
+# Wait until both tables finish
+thread1.join()
+thread2.join()
+
+print("✅ Both tables have completed their movements.")

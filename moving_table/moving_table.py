@@ -5,13 +5,16 @@ from moving_table.oml_mrtu import *
 # Wheel and encoder parameters
 WHEEL_CIRCUMFERENCE = 40.0 * 3.14159265359  # mm
 PULSES_PER_REVOLUTION = 12000  # Encoder pulses per wheel revolution
+PULSES_PER_DEGREE = 9000 / 90  # 9000 pulses = 90 degrees
 
 
 class MovingTableController:
-    def __init__(self, motor1: ModbusAZ, motor2: ModbusAZ, motor3: ModbusAZ):
+    def __init__(self, motor1, motor2, motor3, poll_interval=0.1, timeout=10.0):
         self.motor1 = motor1
         self.motor2 = motor2
         self.motor3 = motor3
+        self.poll_interval = poll_interval
+        self.timeout = timeout
 
     # ---------------- Motor configuration ----------------
     def configure_motor(
@@ -69,29 +72,74 @@ class MovingTableController:
         return True
 
     # ---------------- Combined move ----------------
+    # def go_to_table(
+    #     self,
+    #     distance_mm: float,
+    #     linear_speed_pulses: int,
+    #     angle_degrees: float,
+    #     rotate_speed_pulses: int,
+    #     operation_type: int,
+    #     delay_after_move: Optional[float] = 0.2,
+    # ):
+    #     """Move and rotate table sequentially."""
+    #     print(f"🟢 Moving table: distance={distance_mm}mm, angle={angle_degrees}°")
+
+    #     success = self.move_table(distance_mm, linear_speed_pulses, operation_type)
+    #     print(f"➡ Move success: {success}")
+    #     if not success:
+    #         return False
+
+    #     time.sleep(delay_after_move)
+
+    #     success = self.rotate_table(angle_degrees, rotate_speed_pulses, operation_type)
+    #     print(f"🔄 Rotate success: {success}")
+    #     if not success:
+    #         return False
+
+    #     print(f"🏁 Table movement complete: {distance_mm} mm, {angle_degrees}°")
+    #     return True
+
     def go_to_table(
-        self,
-        distance_mm: float,
-        linear_speed_pulses: int,
-        angle_degrees: float,
-        rotate_speed_pulses: int,
-        operation_type: int,
-        delay_after_move: Optional[float] = 0.2,
+        self, distance_mm, angle_degrees, linear_speed, rotate_speed, operation_type
     ):
-        """Move and rotate table sequentially."""
-        print(f"🟢 Moving table: distance={distance_mm}mm, angle={angle_degrees}°")
+        """
+        Move table linearly (distance_mm) and rotate (angle_degrees).
+        Converts distance/angle to encoder pulses automatically.
+        """
+        # Convert mm to pulses
+        linear_pulses = int((distance_mm / WHEEL_CIRCUMFERENCE) * PULSES_PER_REVOLUTION)
 
-        success = self.move_table(distance_mm, linear_speed_pulses, operation_type)
-        print(f"➡ Move success: {success}")
-        if not success:
-            return False
+        # Convert degrees to pulses
+        rotate_pulses = int(angle_degrees * PULSES_PER_DEGREE)
 
-        time.sleep(delay_after_move)
+        motors = [self.motor1, self.motor2, self.motor3]
+        targets = [linear_pulses, linear_pulses, rotate_pulses]
 
-        success = self.rotate_table(angle_degrees, rotate_speed_pulses, operation_type)
-        print(f"🔄 Rotate success: {success}")
-        if not success:
-            return False
+        # Start all motors
+        for motor, target, speed in zip(
+            motors, targets, [linear_speed, linear_speed, rotate_speed]
+        ):
+            motor.startPosition(position=target, speed=speed, OpeType=operation_type)
 
-        print(f"🏁 Table movement complete: {distance_mm} mm, {angle_degrees}°")
-        return True
+        # Poll until all motors reach their target or timeout
+        start_time = time.time()
+        while True:
+            all_reached = True
+            for motor, target in zip(motors, targets):
+                pos = motor.readPosition()
+                if not pos:
+                    print("❌ Failed to read position from motor")
+                    all_reached = False
+                    continue
+                current_pos = pos[1]  # assuming index 1 holds position
+                if current_pos != target:
+                    all_reached = False
+
+            if all_reached:
+                break
+
+            if (time.time() - start_time) > self.timeout:
+                print("⚠️ Timeout waiting for motors to reach target")
+                break
+
+            time.sleep(self.poll_interval)
